@@ -27,38 +27,46 @@ reads1 = [[15,5,8,64,31,93,63,1,66,49],[9,4,4,31,22,86,59,1,66,49]]
 reads2 = [[129,574,36,816,685,425,133,752,526,456,809,706,482,744,903,716,305],[60,385,33,263,615,66,36,217,492,356,645,210,324,220,209,128,249]]
 
 ## Fréquences de départ pour la détermination du maximum de vraisemblance
-lam1 = [0.3]*10
-lam2 = [0.8]*17
+lam1 = [0.6,0.3,0.1]
+lam2 = [0.1]*5
 
 
 ### Implémentation des fonctions :
 
 ## Probabilité de tirer nb_1 parmi nb_tirages avec une probabilité de lamb_i
-def probaBinomiale(nb_1,nb_tirages,lamb_i):
-    proba = comb(nb_tirages,nb_1)*pow(lamb_i,nb_1)*pow(1-lamb_i,nb_tirages-nb_1)
+def probaBinomiale(nb_1,nb_tirages,pflambda_i):
+    proba = comb(nb_tirages,nb_1)*pow(pflambda_i,nb_1)*pow(1-pflambda_i,nb_tirages-nb_1)
     return proba
 
+print(probaBinomiale(9,15,0.7))
+print(probaBinomiale(9,15,0.92))
+
 ## Fonction de vraisemblance
-def likelihood(lam,reads):
+def likelihood(lam,reads,G):
+    lam = lam/np.sum(lam)
+    Pflambda = np.dot(G,lam)
     vraisemblance = 1
     for i in range(len(reads[1])):
-        proba = probaBinomiale(reads[1][i],reads[0][i],lam[i])
+        proba = probaBinomiale(reads[1][i],reads[0][i],Pflambda[i])
         #print(reads[1][i],reads[0][i],lam[i],proba)
+        # if proba == 0:
+        #     proba = 0.00000000000000000000000000000000001
         vraisemblance = vraisemblance * proba
+    # print(lam,vraisemblance)
     return -vraisemblance
 
-# print(likelihood(lam,reads))
+print(likelihood(lam1,reads1,G1))
 
 ### Maximisation de la fonction de vraisemblance (minimisation de son opposé)
 
-min1_NM = scipy.optimize.minimize(likelihood,lam1,args=(reads1),method= 'Nelder-Mead',bounds=((0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1)),options={'maxiter':5000,'maxfev':5000})
+# min1_NM = scipy.optimize.minimize(likelihood,lam1,args=(reads1, G1),method= 'Nelder-Mead',bounds=((0,1),(0,1),(0,1)),options={'maxiter':5000,'maxfev':5000})
 # print(min1_NM)
-min1_powell = scipy.optimize.minimize(likelihood,lam1,args=(reads1),method= 'Powell',bounds=((0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1)))
+# min1_powell = scipy.optimize.minimize(likelihood,lam1,args=(reads1,G1),method= 'Powell',bounds=((0,1),(0,1),(0,1)))
 # print(min1_powell)
 
-min2_NM = scipy.optimize.minimize(likelihood,lam2,args=(reads2),method= 'Nelder-Mead',bounds=((0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1)),options={'maxiter':5000,'maxfev':5000})
+min2_NM = scipy.optimize.minimize(likelihood,lam2,args=(reads2,G2),method= 'Nelder-Mead',bounds=((0,1),(0,1),(0,1),(0,1),(0,1)),options={'maxiter':5000,'maxfev':5000})
 # print(min2_NM)
-min2_Powell = scipy.optimize.minimize(likelihood,lam2,args=(reads2),method= 'Powell',bounds=((0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1)))
+min2_Powell = scipy.optimize.minimize(likelihood,lam2,args=(reads2,G2),method= 'Powell',bounds=((0,1),(0,1),(0,1),(0,1),(0,1)))
 # print(min2_powell)
 
 ### Analyses
@@ -72,9 +80,12 @@ min2_Powell = scipy.optimize.minimize(likelihood,lam2,args=(reads2),method= 'Pow
 # print("fréquences attendues Powell : ", min1_powell.x)
 # print("fréquences attendues Nelder-Mead : ", min1_NM.x)
 # print("lambda à trouver : ",lamb1)
-# print("lambda de l'algo Powell : ", lam1_final_Powell) #,sum(lam2_final_Powell))
-# print("lambda de l'algo Nelder-Mead : ", lam1_final_NelderMead) #,sum(lam2_final_NelderMead))
-#
+# print("lambda de l'algo Powell : ", min1_powell.x/np.sum(min1_powell.x)) #,sum(lam2_final_Powell))
+# print("lambda de l'algo Nelder-Mead : ", min1_NM.x/np.sum(min1_NM.x)) #,sum(lam2_final_NelderMead))
+# print(likelihood(lam1,reads1,G1))
+# print(likelihood(min1_powell.x,reads1,G1))
+# print(likelihood(min1_NM.x,reads1,G1))
+
 # erreur_lam1_Powell = abs(lam1_final_Powell - lamb1)/lamb1
 # print("erreur moyenne Powell = ", np.mean(erreur_lam1_Powell)) # En moyenne 9,98% d'erreur
 # erreur_lam1_NM = abs(lam1_final_NelderMead - lamb1)/lamb1
@@ -88,9 +99,12 @@ min2_Powell = scipy.optimize.minimize(likelihood,lam2,args=(reads2),method= 'Pow
 # print("fréquences attendues à trouver : ",Pf2)
 # print("fréquences attendues Powell : ", min2_Powell.x)
 # print("fréquences attendues Nelder-Mead : ", min2_NM.x)
-# print("lambda à trouver : ",lamb2)
-# print("lambda de l'algo Powell : ", lam2_final_Powell,sum(lam2_final_Powell))
-# print("lambda de l'algo Nelder-Mead : ", lam2_final_NelderMead,sum(lam2_final_NelderMead))
+print("lambda à trouver : ",lamb2)
+print("lambda de l'algo Powell : ",min2_Powell.x/np.sum(min2_Powell.x))
+print("lambda de l'algo Nelder-Mead : ", min2_NM.x/np.sum(min2_NM.x))
+print(likelihood(lamb2,reads2,G2))
+print(likelihood(min2_Powell.x,reads2,G2))
+print(likelihood(min2_NM.x,reads2,G2))
 #
 # erreur_lam2_Powell = abs(lam2_final_Powell - lamb2)/lamb2
 # print("erreur moyenne Powell = ", np.mean(erreur_lam2_Powell)) # En moyenne erreur de 178%
@@ -136,13 +150,13 @@ min2_Powell = scipy.optimize.minimize(likelihood,lam2,args=(reads2),method= 'Pow
 #
 # help(jacobian)
 
-from jax import jacfwd, jacrev
-
-W = [1]*len(lam1)
-J = jacfwd(likelihood)(W)
-print("jacfwd result, with shape", J.shape)
-print(J)
-
-J = jacrev(likelihood)(W)
-print("jacrev result, with shape", J.shape)
-print(J)
+# from jax import jacfwd, jacrev
+#
+# W = [1]*len(lam1)
+# J = jacfwd(likelihood)(W)
+# print("jacfwd result, with shape", J.shape)
+# print(J)
+#
+# J = jacrev(likelihood)(W)
+# print("jacrev result, with shape", J.shape)
+# print(J)
