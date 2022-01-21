@@ -24,6 +24,16 @@ def generateG(nb_genotypes,nb_snips):
         G.append(geno)
     return G
 
+def generateTrue_frequencies(G, lam) :
+    freq = []
+    for j in range(len(G[0])):
+        ones_freq = 0
+        for i in range(len(G)):
+            if (G[i][j] == 1):
+                ones_freq += lam[i]
+        freq.append(ones_freq)
+    return freq
+
 def generateReads_observ(nb_snips,freq):
     reads_observ = []
     nb_reads = []
@@ -43,14 +53,14 @@ def binomInverse(n,p):
         x+=1
     return x
 
-freq = np.array(generateLambda(7))
-G = np.array(generateG(7,5))
-print(G)
-G = G.T
-reads = generateReads_observ(5,freq)
-print(freq, sum(freq))
-print(G@freq)
-print(reads)
+# freq = np.array(generateLambda(7))
+# G = np.array(generateG(7,5))
+# print(G)
+# G = G.T
+# reads = generateReads_observ(5,freq)
+# print(freq, sum(freq))
+# print(G@freq)
+# print(reads)
 
 # def generator(nb_genotypes,nb_snips):
 #     frequences = generateLambda(nb_genotypes)
