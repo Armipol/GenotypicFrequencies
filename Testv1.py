@@ -48,6 +48,12 @@ def binomInverse(n,p):
 
 ### Définition des matrices
 
+#Méthode pseudo-inversion directe de G
+# Lambda = pseudoinv(G) * Pf1
+def pinv_only(G_t, Pf1) :
+    G = np.array(G_t).transpose()
+    return np.linalg.pinv(G) @ Pf1
+
 print("Valeurs générées aléatoirement :")
 freq = np.array(generateLambda(5))
 G = generateG(5,9)
@@ -56,8 +62,13 @@ G = G.T
 reads = generateReads_observ(9,freq,G)
 print("Reads & Nb1 : ", reads)
 Pf1_attendu = G@freq
-lam_init = [0.2,0.2,0.2,0.2,0.2]
-Pf_init =G@lam_init
+Pf1_observe = np.zeros(9)
+for i in range(9):
+    Pf1_observe[i] = reads[1][i]/reads[0][i] # Attention au cas où 1obs = 0
+
+lam_init = pinv_only(G.T,Pf1_observe)
+# lam_init = [0.2,0.2,0.2,0.2,0.2]
+# Pf_init =G@lam_init
 print("fréquences initiales à retrouver : ", freq, sum(freq))
 print("fréquences attendues par position (Pf1) : ", Pf1_attendu)
 print("lambda initial donné pour minimisation : ", lam_init)
@@ -105,6 +116,19 @@ def likelihood(lam,reads,G):
     # print(lam,vraisemblance)
     return -vraisemblance
 
+def likelihoodLog(lam,reads,G):
+    lam = lam/np.sum(lam)
+    Pflambda = np.dot(G,lam)
+    vraisemblance = 0
+    for i in range(len(reads[1])):
+        proba = stats.binom.pmf(reads[1][i],reads[0][i],Pflambda[i])
+        if proba == 0:
+            vraisemblance += 0.000000000000001
+        else :
+            vraisemblance += np.log(proba)
+            # print(vraisemblance)
+    return -vraisemblance
+
 ### Maximisation de la fonction de vraisemblance (minimisation de son opposé)
 min_NM = scipy.optimize.minimize(likelihood,lam_init,args=(reads,G),method= 'Nelder-Mead',bounds=((0,1),(0,1),(0,1),(0,1),(0,1)),options={'maxiter':5000,'maxfev':5000})
 min_Powell = scipy.optimize.minimize(likelihood,lam_init,args=(reads,G),method= 'Powell',bounds=((0,1),(0,1),(0,1),(0,1),(0,1)))
@@ -115,17 +139,33 @@ min_TNC = scipy.optimize.minimize(likelihood,lam_init,args=(reads,G),method= 'TN
 min_COBYLA = scipy.optimize.minimize(likelihood,lam_init,args=(reads,G),method= 'COBYLA')
 min_trust_constr = scipy.optimize.minimize(likelihood,lam_init,args=(reads,G),method= 'trust-constr',bounds=((0,1),(0,1),(0,1),(0,1),(0,1)))
 
+min_NMLog = scipy.optimize.minimize(likelihoodLog,lam_init,args=(reads,G),method= 'Nelder-Mead',bounds=((0,1),(0,1),(0,1),(0,1),(0,1)),options={'maxiter':5000,'maxfev':5000})
+# print(min_NMLog)
 erreurC = abs(freq-(min_COBYLA.x/np.sum(min_COBYLA.x)))
 for i in range(len(erreurC)):
     erreurC[i] = erreurC[i]/freq[i]
 
-erreurNM = abs(freq-(min_NM.x/np.sum(min_NM.x)))
-for i in range(len(erreurNM)):
-    erreurNM[i] = erreurNM[i]/freq[i]
-
 erreurP = abs(freq-(min_Powell.x/np.sum(min_Powell.x)))
 for i in range(len(erreurP)):
     erreurP[i] = erreurP[i]/freq[i]
+#
+erreurNM = abs(freq-(min_NM.x/np.sum(min_NM.x)))
+print("Erreur absolue : ", erreurNM)
+print("Erreur absolue moyenne % : ",round(np.mean(erreurNM)*100,2))
+
+for i in range(len(erreurNM)):
+    erreurNM[i] = erreurNM[i]/freq[i]
+
+erreurNMLog = abs(freq-(min_NMLog.x/np.sum(min_NMLog.x)))
+print("Erreur absolue log : ", erreurNMLog)
+print("Erreur absolue log moyenne % : ",round(np.mean(erreurNMLog)*100,2))
+
+for i in range(len(erreurNMLog)):
+    erreurNMLog[i] = erreurNMLog[i]/freq[i]
+
+# lamNML = min_NMLog.xQ
+# for i in range(len(lamNML)):
+#     lamNML[i] = exp(lamNML[i])
 
 print("lambda à trouver : ",freq)
 print("lambda de l'algo Nelder-Mead : ", min_NM.x/np.sum(min_NM.x))
@@ -139,7 +179,11 @@ print("lambda de l'algo BFGS : ", min_BFGS.x/np.sum(min_BFGS.x))  #Renvoie equip
 print("lambda de l'algo L-BFGS-B : ", min_LBFGSB.x/np.sum(min_LBFGSB.x))  #Renvoie equiproportion
 print("lambda de l'algo TNC : ", min_TNC.x/np.sum(min_TNC.x))  #Renvoie equiproportion
 print("lambda de l'algo trust-constr ", min_trust_constr.x/np.sum(min_trust_constr.x))  #Renvoie equiproportion
-
+print("lambda de l'algo Nelder-Mead Log: ", min_NMLog.x/np.sum(min_NMLog.x))
+# print("lambda de l'algo Nelder-Mead Log exp : ", lamNML/np.sum(lamNML))
+print("Erreur moyenne avec l'algo Nelder-Mead Log (en %) : ",round(np.mean(erreurNMLog)*100,2))
+print("likelihood du vecteur à retrouver :",likelihoodLog(freq,reads,G))
+print("likelihood du vecteur approximé :", likelihoodLog(min_NMLog.x,reads,G))
 
 # min1_NM = scipy.optimize.minimize(likelihood,lam1,args=(reads1, G1),method= 'Nelder-Mead',bounds=((0,1),(0,1),(0,1)),options={'maxiter':5000,'maxfev':5000})
 # print(min1_NM)
