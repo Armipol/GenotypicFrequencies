@@ -14,14 +14,21 @@ def generateLambda(nb_genotypes):
         freq_geno[1] -= 0.01
     return freq_geno
 
+#obsolete
+# def generateG(nb_genotypes,nb_snips):
+#     G = []
+#     for i in range(nb_genotypes):
+#         geno = []
+#         for j in range(nb_snips):
+#             geno.append(rd.randint(0,1))
+#         G.append(geno)
+#     return G
 
 def generateG(nb_genotypes,nb_snips):
-    G = []
+    G = np.zeros((nb_genotypes,nb_snips))
     for i in range(nb_genotypes):
-        geno = []
         for j in range(nb_snips):
-            geno.append(rd.randint(0,1))
-        G.append(geno)
+            G[i][j] = rd.randint(0,1)
     return G
 
 def generateTrue_frequencies(G, lam) :
@@ -34,16 +41,30 @@ def generateTrue_frequencies(G, lam) :
         freq.append(ones_freq)
     return freq
 
-def generateReads_observ(nb_snips,freq):
-    reads_observ = []
-    nb_reads = []
-    nb1_observe = []
-    for j in range(nb_snips):
+#obsolete
+# def generateReads_observ(nb_snips,freq):
+#     reads_observ = []
+#     nb_reads = []
+#     nb1_observe = []
+#     for j in range(nb_snips):
+#         read = rd.randint(0,10000)
+#         nb_reads.append(read)
+#         nb1_observe.append(binomInverse(read,freq[j]))
+#     reads_observ.append(nb_reads)
+#     reads_observ.append(nb1_observe)
+#     return reads_observ
+
+def generateReads_observ(nb_snips,freq,G):
+    reads_observ = np.zeros((2,nb_snips))
+    nb_reads = np.zeros(nb_snips)
+    nb1_observe = np.zeros(nb_snips)
+    for i in range(nb_snips):
         read = rd.randint(0,10000)
-        nb_reads.append(read)
-        nb1_observe.append(binomInverse(read,freq[j]))
-    reads_observ.append(nb_reads)
-    reads_observ.append(nb1_observe)
+        nb_reads[i] = read
+        Pf = G@freq
+        nb1_observe[i] = np.random.binomial(read,Pf[i])
+    reads_observ[0] = nb_reads
+    reads_observ[1] = nb1_observe
     return reads_observ
 
 def binomInverse(n,p):

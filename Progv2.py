@@ -6,42 +6,7 @@ import random as rd
 from scipy import stats
 import scipy.optimize
 import sys
-
-
-
-### Définition des fonctions de génération :
-
-def generateLambda(nb_genotypes):
-    freq_geno = np.zeros(nb_genotypes)
-    for i in range(nb_genotypes):
-        freq_geno[i] = round(rd.random(),2)
-    somme = np.sum(freq_geno)
-    freq_geno = np.round(freq_geno/somme,2)
-    if sum(freq_geno) < 1:
-        freq_geno[1]+=0.01
-    if sum(freq_geno) > 1:
-        freq_geno[1] -= 0.01
-    return freq_geno
-
-def generateG(nb_genotypes,nb_snips):
-    G = np.zeros((nb_genotypes,nb_snips))
-    for i in range(nb_genotypes):
-        for j in range(nb_snips):
-            G[i][j] = rd.randint(0,1)
-    return G
-
-def generateReads_observ(nb_snips,freq,G):
-    reads_observ = np.zeros((2,nb_snips))
-    nb_reads = np.zeros(nb_snips)
-    nb1_observe = np.zeros(nb_snips)
-    for i in range(nb_snips):
-        read = rd.randint(0,10000)
-        nb_reads[i] = read
-        Pf = G@freq
-        nb1_observe[i] = np.random.binomial(read,Pf[i])
-    reads_observ[0] = nb_reads
-    reads_observ[1] = nb1_observe
-    return reads_observ
+from Generator import *
 
 
 ### Implémentation des méthodes de traitement :
@@ -171,58 +136,19 @@ print("\n")
 # affichageErreur(freq,minimizeEssr(G.T,Pf1_observe))
 # print("\n")
 
-print("lambda à trouver : ",freq)
-print("lambda de l'algo Nelder-Mead : ", min_NM.x/np.sum(min_NM.x))
-affichageErreur(freq,min_NM.x)
-print("lambda de l'algo Nelder-Mead Log: ", min_NMLog.x/np.sum(min_NMLog.x))
-affichageErreur(freq,min_NMLog.x)
-print("\n")
+def print_minimize_results(freq, min, min_log, method):
+    print("lambda à trouver : ", freq)
+    print("lambda de l'algo " + method + ": ", min.x / np.sum(min.x))
+    affichageErreur(freq, min.x)
+    print("lambda de l'algo " + method + " Log: ", min_log.x / np.sum(min_log.x))
+    affichageErreur(freq, min_log.x)
+    print("\n")
 
-print("lambda à trouver : ",freq)
-print("lambda de l'algo Powell : ",min_Powell.x/np.sum(min_Powell.x))
-affichageErreur(freq,min_Powell.x)
-print("lambda de l'algo Powell Log : ",min_PowellLog.x/np.sum(min_PowellLog.x))
-affichageErreur(freq,min_PowellLog.x)
-print("\n")
-
-print("lambda à trouver : ",freq)
-print("lambda de l'algo COBYLA : ", min_COBYLA.x/np.sum(min_COBYLA.x))
-affichageErreur(freq,min_COBYLA.x)
-print("lambda de l'algo COBYLA Log : ", min_COBYLALog.x/np.sum(min_COBYLALog.x))
-affichageErreur(freq,min_COBYLALog.x)
-print("\n")
-
-print("lambda à trouver : ",freq)
-print("lambda de l'algo CG : ", min_CG.x/np.sum(min_CG.x)) #Renvoie equiproportion
-affichageErreur(freq,min_CG.x)
-print("lambda de l'algo CG Log : ", min_CGLog.x/np.sum(min_CGLog.x)) #Renvoie equiproportion
-affichageErreur(freq,min_CGLog.x)
-print("\n")
-
-print("lambda à trouver : ",freq)
-print("lambda de l'algo BFGS : ", min_BFGS.x/np.sum(min_BFGS.x))  #Renvoie equiproportion
-affichageErreur(freq,min_BFGS.x)
-print("lambda de l'algo BFGS Log : ", min_BFGSLog.x/np.sum(min_BFGSLog.x))  #Renvoie equiproportion
-affichageErreur(freq,min_BFGSLog.x)
-print("\n")
-
-print("lambda à trouver : ",freq)
-print("lambda de l'algo L-BFGS-B : ", min_LBFGSB.x/np.sum(min_LBFGSB.x))  #Renvoie equiproportion
-affichageErreur(freq,min_LBFGSB.x)
-print("lambda de l'algo L-BFGS-B Log : ", min_LBFGSBLog.x/np.sum(min_LBFGSBLog.x))  #Renvoie equiproportion
-affichageErreur(freq,min_LBFGSBLog.x)
-print("\n")
-
-print("lambda à trouver : ",freq)
-print("lambda de l'algo TNC : ", min_TNC.x/np.sum(min_TNC.x))  #Renvoie equiproportion
-affichageErreur(freq,min_TNC.x)
-print("lambda de l'algo TNC Log : ", min_TNCLog.x/np.sum(min_TNCLog.x))  #Renvoie equiproportion
-affichageErreur(freq,min_TNCLog.x)
-print("\n")
-
-print("lambda à trouver : ",freq)
-print("lambda de l'algo trust-constr ", min_trust_constr.x/np.sum(min_trust_constr.x))  #Renvoie equiproportion
-affichageErreur(freq,min_trust_constr.x)
-print("lambda de l'algo trust-constr Log ", min_trust_constrLog.x/np.sum(min_trust_constrLog.x))  #Renvoie equiproportion
-affichageErreur(freq,min_trust_constrLog.x)
-print("\n")
+print_minimize_results(freq, min_NM, min_NMLog, 'Nelder Mead')
+print_minimize_results(freq, min_Powell, min_PowellLog, 'Powell')
+print_minimize_results(freq, min_COBYLA, min_COBYLALog, 'COBYLA')
+print_minimize_results(freq, min_CG, min_CGLog, 'CG') #Renvoie equiproportion (normal et log)
+print_minimize_results(freq, min_BFGS, min_BFGSLog, 'BFGS') #Renvoie equiproportion (normal et log)
+print_minimize_results(freq, min_LBFGSB, min_LBFGSBLog, 'L-BFGS-B') #Renvoie equiproportion (normal et log)
+print_minimize_results(freq, min_TNC, min_TNCLog, 'TNC') #Renvoie equiproportion (normal et log)
+print_minimize_results(freq, min_trust_constr, min_trust_constrLog, 'trust-constr') #Renvoie equiproportion (normal et log)
