@@ -110,13 +110,11 @@ def build_positions_dict(filepath):
     print("\npositions dictionnary built")
     return dict
 
-
-positions_dict = build_positions_dict("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/positions_correspondance.txt")
-
-def add_harp_positions(i, filepath_reads, positions_dict):
+def add_harp_positions(filepath_reads, positions_dict):
     n = 0
     dict = reads_statistics_reader(filepath_reads)
     new_dict = {}
+    # format : new_dict = {'numero_harp_1' : line_dict_1, 'numero_harp_2' : line_dict_2, ...}
     j = 0
     for key in dict:
         line_dict = dict[key]
@@ -132,9 +130,6 @@ def add_harp_positions(i, filepath_reads, positions_dict):
         # à priori il semble y avoir 5242 numéros harp, donc la matrice G devrait avoir 5242 lignes.
     print("\nharp positions added")
     return new_dict
-
-harp_dict = add_harp_positions(1, "C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/reads_statistics.txt", positions_dict)
-#format : dict = {'numero_harp_1' : line_dict_1, 'numero_harp_2' : line_dict_2, ...}
 
 def obtain_reads_proba(harp_dict, nb_genotypes):
     for key in harp_dict:
@@ -174,16 +169,41 @@ def obtain_reads_proba(harp_dict, nb_genotypes):
         line_dict['proba_dict'] = proba_dict
     return harp_dict
 
-dict_with_proba = obtain_reads_proba(harp_dict, 96)
+def encode_nucleotypes(filepath, nb_genotypes, nb_snips):
+    G = np.zeros((nb_snips, nb_genotypes))
+    f = open(filepath, 'r')
+    i = 0
+    lines_dict = {}
+    for line in csv.reader(f):
+        if(i == 0):
+            nb_genotypes_in_file = len(line) - 2 # pour vérifier qu'il y a bien 96 génotypes
+            print("Nbr de génotypes dans le fichier :", nb_genotypes_in_file)
+        else:
+            line_nb = i - 1
+            lines_dict[line_nb] = int(line[0])
+            # note  : le nucléotide de référence n'est pas exploité pour le moment
+            for j in range(2, len(line)):
+                # A = 0, C = 1, G = 2, T = 3, autre : 4
+                if(line[j] != 'A' and line[j] != 'C' and line[j] != 'G' and line[j] != 'T'):
+                    # Il peut y avoir des M, S, Y, W...
+                    G[i - 1][j - 2] = 4
+                if (line[j] == 'A'):
+                    G[i - 1][j - 2] = 0
+                if (line[j] == 'C'):
+                    G[i - 1][j - 2] = 1
+                if (line[j] == 'G'):
+                    G[i - 1][j - 2] = 2
+                if (line[j] == 'T'):
+                    G[i - 1][j - 2] = 3
+        i += 1
+    return [G, lines_dict]
 
-def encode_nucleotype(filepath):
-    G = []
-    # A = 0, C = 1, G = 2, T = 3
-
-
-
-#treat_one_mixture(0, "C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/reads_statistics.txt")
+#positions_dict = build_positions_dict("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/positions_correspondance.txt")
+#harp_dict = add_harp_positions("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/reads_statistics.txt", positions_dict)
+#dict_with_proba = obtain_reads_proba(harp_dict, 96)
+G_and_lines = encode_nucleotypes("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/nucleotypes.txt", 96, 5242)
+print(G_and_lines[1])
 
 # les 4 probas dans des tableaux pour chaque position
 
-#pratique : le num harp de la ligne 1 avec position 97 est 7783
+# utile : le num harp de la ligne 1 avec position 97 est 7783
