@@ -131,6 +131,7 @@ def likelihoodLog(lam,reads,G):
 
 ### Maximisation de la fonction de vraisemblance (minimisation de son opposé)
 min_NM = scipy.optimize.minimize(likelihood,lam_init,args=(reads,G),method= 'Nelder-Mead',bounds=((0,1),(0,1),(0,1),(0,1),(0,1)),options={'maxiter':5000,'maxfev':5000})
+print(min_NM)
 min_Powell = scipy.optimize.minimize(likelihood,lam_init,args=(reads,G),method= 'Powell',bounds=((0,1),(0,1),(0,1),(0,1),(0,1)))
 min_CG = scipy.optimize.minimize(likelihood,lam_init,args=(reads,G),method= 'CG')
 min_BFGS = scipy.optimize.minimize(likelihood,lam_init,args=(reads,G),method= 'BFGS')
