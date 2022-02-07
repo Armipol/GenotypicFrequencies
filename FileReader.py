@@ -113,8 +113,8 @@ def build_positions_dict(filepath):
 def add_harp_positions(filepath_reads, positions_dict):
     n = 0
     dict = reads_statistics_reader(filepath_reads)
-    new_dict = {}
-    # format : new_dict = {'numero_harp_1' : line_dict_1, 'numero_harp_2' : line_dict_2, ...}
+    harp_dict = {}
+    # format : harp_dict = {'numero_harp_1' : line_dict_1, 'numero_harp_2' : line_dict_2, ...}
     j = 0
     for key in dict:
         line_dict = dict[key]
@@ -123,14 +123,15 @@ def add_harp_positions(filepath_reads, positions_dict):
         for pos_key in positions_dict:
             if (positions_dict[pos_key]['basic_position'] == position_number and positions_dict[pos_key]['fragment_name'] == fragment_name):
                 corresp_harp_position = positions_dict[pos_key]['harp_position']
-                new_dict[corresp_harp_position] = line_dict
+                harp_dict[corresp_harp_position] = line_dict
 
         # la position n'est pas une clé car on retrouve plusieurs fois une même position.
         # on doit mettre les numéros de positions à la référence HARP pour comparer avec les nucléotypes
         # à priori il semble y avoir 5242 numéros harp, donc la matrice G devrait avoir 5242 lignes.
     print("\nharp positions added")
-    return new_dict
+    return harp_dict
 
+#pas utile il semblerait
 def obtain_reads_proba(harp_dict, nb_genotypes):
     for key in harp_dict:
         line_dict = harp_dict[key]
@@ -173,15 +174,18 @@ def encode_nucleotypes(filepath, nb_genotypes, nb_snips):
     G = np.zeros((nb_snips, nb_genotypes))
     f = open(filepath, 'r')
     i = 0
-    lines_dict = {}
+    lines_dict = {} # lines_dict est le dictionnaire des positions harp de la matrice G selon le numéro de ligne
+    pairs_dict = {}
     for line in csv.reader(f):
         if(i == 0):
             nb_genotypes_in_file = len(line) - 2 # pour vérifier qu'il y a bien 96 génotypes
             print("Nbr de génotypes dans le fichier :", nb_genotypes_in_file)
+            print(line)
         else:
             line_nb = i - 1
             lines_dict[line_nb] = int(line[0])
             # note  : le nucléotide de référence n'est pas exploité pour le moment
+            nucleotids_already_seen = []
             for j in range(2, len(line)):
                 # A = 0, C = 1, G = 2, T = 3, autre : 4
                 if(line[j] != 'A' and line[j] != 'C' and line[j] != 'G' and line[j] != 'T'):
@@ -189,20 +193,61 @@ def encode_nucleotypes(filepath, nb_genotypes, nb_snips):
                     G[i - 1][j - 2] = 4
                 if (line[j] == 'A'):
                     G[i - 1][j - 2] = 0
+                    nucleotids_already_seen.append('A')
                 if (line[j] == 'C'):
                     G[i - 1][j - 2] = 1
+                    nucleotids_already_seen.append('C')
                 if (line[j] == 'G'):
                     G[i - 1][j - 2] = 2
+                    nucleotids_already_seen.append('G')
                 if (line[j] == 'T'):
                     G[i - 1][j - 2] = 3
+                    nucleotids_already_seen.append('T')
+            nucleotids_already_seen = list(set(nucleotids_already_seen))
+            if(len(nucleotids_already_seen) >= 3):
+                print("more than 2 nucleotids types seen", len(nucleotids_already_seen)) # (sans compter les autres que ACGT)
+            pairs_dict[int(line[0])] = nucleotids_already_seen
         i += 1
-    return [G, lines_dict]
+    return [G, lines_dict, pairs_dict]
 
-#positions_dict = build_positions_dict("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/positions_correspondance.txt")
-#harp_dict = add_harp_positions("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/reads_statistics.txt", positions_dict)
+def delete_reads_errors(harp_dict, pairs_dict):
+    j = 0 # indice de la position harp
+    for key in harp_dict:
+        line_dict = harp_dict[key]
+        reads_dict = line_dict.get('reads_dict')
+        i = 0 # indice du mélange de génotypes, càd correspondant à un tableau de reads
+        for reads_key in reads_dict:
+            reads_array_name = 'reads_array_' + str(i)
+            if('A' not in pairs_dict[key] and reads_dict[reads_array_name][2] != 0):
+                # print("harp", key)
+                # print("reads", i)
+                # print(pairs_dict[key])
+                # print(reads_dict[reads_array_name])
+                reads_dict[reads_array_name][1] = reads_dict[reads_array_name][1] - reads_dict[reads_array_name][2]
+                reads_dict[reads_array_name][2] = 0
+                # print(reads_dict[reads_array_name])
+            if ('C' not in pairs_dict[key] and reads_dict[reads_array_name][3] != 0):
+                reads_dict[reads_array_name][1] = reads_dict[reads_array_name][1] - reads_dict[reads_array_name][3]
+                reads_dict[reads_array_name][3] = 0
+            if ('G' not in pairs_dict[key] and reads_dict[reads_array_name][4] != 0):
+                reads_dict[reads_array_name][1] = reads_dict[reads_array_name][1] - reads_dict[reads_array_name][4]
+                reads_dict[reads_array_name][4] = 0
+            if ('T' not in pairs_dict[key] and reads_dict[reads_array_name][5] != 0):
+                reads_dict[reads_array_name][1] = reads_dict[reads_array_name][1] - reads_dict[reads_array_name][5]
+                reads_dict[reads_array_name][5] = 0
+            i += 1
+        j += 1
+
+positions_dict = build_positions_dict("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/positions_correspondance.txt")
+harp_dict = add_harp_positions("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/reads_statistics.txt", positions_dict)
 #dict_with_proba = obtain_reads_proba(harp_dict, 96)
 G_and_lines = encode_nucleotypes("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/nucleotypes.txt", 96, 5242)
-print(G_and_lines[1])
+#print(G_and_lines[1])
+print(G_and_lines[2][34682560])
+delete_reads_errors(harp_dict, G_and_lines[2])
+
+# vérifier éventuellement que les paires parentes sont toujours cohérentes. Exemple : vérifier qu'on n'a pas un cas où les tirages sont
+# de type a/0/g/0 alors que les parents sont de type a/0/0/t
 
 # les 4 probas dans des tableaux pour chaque position
 
