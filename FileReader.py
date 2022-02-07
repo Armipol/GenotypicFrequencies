@@ -175,7 +175,7 @@ def encode_nucleotypes(filepath, nb_genotypes, nb_snips):
     f = open(filepath, 'r')
     i = 0
     lines_dict = {} # lines_dict est le dictionnaire des positions harp de la matrice G selon le numéro de ligne
-    pairs_dict = {}
+    pairs_dict = {} # dictionnaire des paires parentes selon la position harp
     for line in csv.reader(f):
         if(i == 0):
             nb_genotypes_in_file = len(line) - 2 # pour vérifier qu'il y a bien 96 génotypes
