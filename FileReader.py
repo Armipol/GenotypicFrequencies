@@ -2,6 +2,106 @@ import numpy as np
 import csv
 
 
+#traitement du fichier simulated_mixtures
+def build_mixtures_dictionnary(filepath):
+    f = open(filepath, 'r')
+    mixtures_dict = {}
+    #format mixture_dict = {‘mixture_name_1’: mixture_array_1, ‘mixture_name_2’: mixture_array_2, …}
+    i = 0
+    j = 1
+    for line in csv.reader(f):
+        if(i == 0):
+            i += 1
+        else:
+            if j <= 12:
+                lines = np.array(line)
+                elements = lines[0].split(';')
+                if j == 1:
+                    mixture = []
+                    previous_mix = elements[0]
+                else:
+                    if elements[0] != previous_mix:
+                        print("problem : not a 12 genotypes mix")
+                        # On vérifie qu'on a bien des mélanges de 12 génotypes à chaque fois
+                    previous_mix = elements[0]
+                mixture.append(elements[1])
+                if j == 12:
+                    mixtures_dict[elements[0]] = mixture
+                j += 1
+            if j == 13:
+                j = 1
+    print("\nmixtures dict built")
+    return mixtures_dict
+
+
+def encode_nucleotypes_0_1(filepath, nb_genotypes, nb_snips):
+    nucleotypes = np.zeros((nb_snips, nb_genotypes))
+    f = open(filepath, 'r')
+    i = 0
+    lines_nucleotypes_dict = {} # lines_dict est le dictionnaire des positions harp de la matrice G selon le numéro de ligne
+    pairs_dict = {} # dictionnaire des paires parentes selon la position harp
+    column_nucleotypes_dict = {} # dictionnaire des colonnes correspondant à chaque génotype
+    count_errors = 0
+    positions_errors = [] # liste des positions contenant des erreurs de lecture
+    k = 0 # décalage d'indice lié au nombre de lignes (positions) supprimées (car elles contiennent des erreurs de lecture)
+    for line in csv.reader(f):
+        if i == 0: # traitement de l'en-tête
+            nb_genotypes_in_file = len(line) - 2 # pour vérifier qu'il y a bien 96 génotypes
+            print("Nbr de génotypes dans le fichier :", nb_genotypes_in_file)
+            for j in range(2, len(line)):
+                column_nucleotypes_dict[line[j]] = j - 2
+            print(column_nucleotypes_dict)
+        else:
+            lines_nucleotypes_dict[i - 1] = int(line[0])
+            ref = line[1]
+            nucleotids_already_seen = []
+            for j in range(2, len(line)):
+                # A = 0, C = 1, G = 2, T = 3, autre : 4
+                if line[j] == ref:
+                    nucleotypes[i - 1][j - 2] = 1
+                    nucleotids_already_seen.append(ref)
+                else:
+                    if line[j] != 'A' and line[j] != 'C' and line[j] != 'G' and line[j] != 'T':
+                        # Il peut y avoir des M, S, Y, W...
+                        # on met une valeur à 2 mais on supprimera les lignes (positions) correspondantes ensuite
+                        nucleotypes[i - 1][j - 2] = 2
+                        count_errors += 1
+                        positions_errors.append(int(line[0]))
+                    else:
+                        nucleotypes[i - 1][j - 2] = 0
+                        nucleotids_already_seen.append(line[j])
+            nucleotids_already_seen = list(set(nucleotids_already_seen))
+            if len(nucleotids_already_seen) >= 3:
+                print("more than 2 nucleotids types seen", len(nucleotids_already_seen)) # (sans compter les autres que ACGT)
+            pairs_dict[int(line[0])] = nucleotids_already_seen
+        i += 1
+    positions_errors = list(set(positions_errors))
+    tuple_to_delete = ()
+    for key in lines_nucleotypes_dict:
+        if lines_nucleotypes_dict[key] in positions_errors:
+            tuple_to_delete += (key,)
+    print("tuple to delete",tuple_to_delete)
+    nucleotypes = np.delete(nucleotypes, tuple_to_delete, axis=0)
+    print("nb of reading errors in parents nucleotypes", count_errors)
+    print("nb of positions that have reading errors", len(positions_errors))
+    print("\nnucleotypes encoded")
+    return [nucleotypes, lines_nucleotypes_dict, column_nucleotypes_dict, pairs_dict, count_errors, positions_errors]
+
+
+def generate_G_from_mix(mixture_name, mixtures_dict, nucleotypes, column_nucleotypes_dict):
+    genotypes = mixtures_dict[mixture_name]
+    G = np.zeros((len(nucleotypes), len(genotypes)))
+    print("len nucleotypes", len(nucleotypes))
+    for i in range(len(nucleotypes)):
+        for j in range(len(genotypes)):
+            G[i][j] = int(nucleotypes[i][column_nucleotypes_dict[genotypes[j]]])
+    return G
+
+
+
+# CI-DESSOUS FONCTIONS LIEES AUX READS
+
+
 def reads_statistics_reader(filepath):
     f = open(filepath, 'r')
     dict = {}
@@ -22,7 +122,7 @@ def reads_statistics_reader(filepath):
             ref_nucleotid = line_array[2]
             p_or_m = line_array[3]
             reads_dict = {}
-            if(p_or_m == 'M'):
+            if p_or_m == 'M':
                 k = 0
                 for j in range(4, len(line_array)):
                     genotype_id = j - 3
@@ -82,7 +182,7 @@ def reads_statistics_reader(filepath):
             line_id = 'line_' + str(i)
             dict[line_id] = line_dict
 
-            if(k != 96):
+            if k != 96:
                 print("problem with number of genotypes for position", position_number)
     return dict
 
@@ -103,7 +203,7 @@ def build_positions_dict(filepath):
         for i in range(1, len(lines)):
             line_array = lines[i].split(' ')
             line_array[0] = line_array[0][1:] # pour enlever le chevron
-            if(i == 1):
+            if i == 1:
                 print(line_array[0])
             line_array[1] = int(line_array[1])
             line_array[2] = int(line_array[2])
@@ -124,7 +224,7 @@ def add_harp_positions(filepath_reads, positions_dict):
         fragment_name = line_dict.get('fragment_name')
         position_number = line_dict.get('position_number') # renommer position_ref
         for pos_key in positions_dict:
-            if (positions_dict[pos_key]['basic_position'] == position_number and positions_dict[pos_key]['fragment_name'] == fragment_name):
+            if positions_dict[pos_key]['basic_position'] == position_number and positions_dict[pos_key]['fragment_name'] == fragment_name:
                 corresp_harp_position = positions_dict[pos_key]['harp_position']
                 harp_dict[corresp_harp_position] = line_dict
 
@@ -135,7 +235,69 @@ def add_harp_positions(filepath_reads, positions_dict):
     return harp_dict
 
 
-#pas utile cette fonction finalement
+def delete_reads_errors(harp_dict, pairs_dict):
+    j = 0 # indice de la position harp
+    for key in harp_dict:
+        line_dict = harp_dict[key]
+        reads_dict = line_dict.get('reads_dict')
+        i = 0 # indice du mélange de génotypes, càd correspondant à un tableau de reads
+        for reads_key in reads_dict:
+            reads_array_name = 'reads_array_' + str(i)
+            if ('A' not in pairs_dict[key]) and reads_dict[reads_array_name][2] != 0:
+                # print("harp", key)
+                # print("reads", i)
+                # print(pairs_dict[key])
+                # print(reads_dict[reads_array_name])
+                reads_dict[reads_array_name][1] = reads_dict[reads_array_name][1] - reads_dict[reads_array_name][2]
+                reads_dict[reads_array_name][2] = 0
+                # print(reads_dict[reads_array_name])
+            if ('C' not in pairs_dict[key]) and reads_dict[reads_array_name][3] != 0:
+                reads_dict[reads_array_name][1] = reads_dict[reads_array_name][1] - reads_dict[reads_array_name][3]
+                reads_dict[reads_array_name][3] = 0
+            if ('G' not in pairs_dict[key]) and reads_dict[reads_array_name][4] != 0:
+                reads_dict[reads_array_name][1] = reads_dict[reads_array_name][1] - reads_dict[reads_array_name][4]
+                reads_dict[reads_array_name][4] = 0
+            if ('T' not in pairs_dict[key]) and reads_dict[reads_array_name][5] != 0:
+                reads_dict[reads_array_name][1] = reads_dict[reads_array_name][1] - reads_dict[reads_array_name][5]
+                reads_dict[reads_array_name][5] = 0
+            i += 1
+        j += 1
+    print("\nreads errors deleted")
+
+
+def extract_reads_nb(harp_dict):
+    reads_array = []
+    for key in harp_dict:
+        line_dict = harp_dict[key]
+        reads_dict = line_dict['reads_dict']
+        for reads_key in reads_dict:
+            reads_array.append(reads_dict[reads_key][1])
+    return reads_array
+
+
+def reads_of_mix(mixture_name, harp_dict, positions_errors):
+    reads = np.zeros((2,len(harp_dict.keys()) - len(positions_errors)))
+    reads_array_name = 'reads_array_' + str(int(mixture_name[3:]))
+    i = 0
+    for position in harp_dict:
+        if position not in positions_errors:
+            ref = harp_dict[position]['ref_nucleotid']
+            reads_array = harp_dict[position]['reads_dict'][reads_array_name]
+            reads[0][i] = reads_array[1]
+            if(ref == 'A'):
+                reads[1][i] = reads_array[2]
+            if (ref == 'C'):
+                reads[1][i] = reads_array[3]
+            if (ref == 'G'):
+                reads[1][i] = reads_array[4]
+            if (ref == 'T'):
+                reads[1][i] = reads_array[5]
+            i += 1
+    return reads
+
+
+
+#FONCTION OBSOLETE
 def obtain_reads_proba(harp_dict, nb_genotypes):
     for key in harp_dict:
         line_dict = harp_dict[key]
@@ -145,8 +307,8 @@ def obtain_reads_proba(harp_dict, nb_genotypes):
         for i in range(nb_genotypes):
             reads_array_name = 'reads_array_' + str(i)
             proba_array_i = reads_dict.get(reads_array_name).copy()
-            if(line_dict['p_or_m'] == 'P'):
-                if(proba_array_i[1] != 0) :
+            if line_dict['p_or_m'] == 'P':
+                if proba_array_i[1] != 0:
                     proba_array_i[2] = proba_array_i[2]/proba_array_i[1]
                     proba_array_i[3] = proba_array_i[3]/proba_array_i[1]
                     proba_array_i[4] = proba_array_i[4]/proba_array_i[1]
@@ -161,13 +323,13 @@ def obtain_reads_proba(harp_dict, nb_genotypes):
                 proba_array_i[3] = 0
                 proba_array_i[4] = 0
                 proba_array_i[5] = 0
-                if(line_dict['ref_nucleotid'] == 'A'):
+                if line_dict['ref_nucleotid'] == 'A':
                     proba_array_i[2] = 1
-                if (line_dict['ref_nucleotid'] == 'C'):
+                if line_dict['ref_nucleotid'] == 'C':
                     proba_array_i[3] = 1
-                if (line_dict['ref_nucleotid'] == 'G'):
+                if line_dict['ref_nucleotid'] == 'G':
                     proba_array_i[4] = 1
-                if (line_dict['ref_nucleotid'] == 'T'):
+                if line_dict['ref_nucleotid'] == 'T':
                     proba_array_i[5] = 1
             proba_array_name = 'proba_array_' + str(i)
             proba_dict[proba_array_name] = proba_array_i
@@ -175,35 +337,7 @@ def obtain_reads_proba(harp_dict, nb_genotypes):
     return harp_dict
 
 
-#traitement du fichier simulated_mixtures
-def build_mixtures_dictionnary(filepath):
-    f = open(filepath, 'r')
-    mixtures_dict = {}
-    i = 0
-    j = 1
-    for line in csv.reader(f):
-        if(i == 0):
-            i += 1
-        else:
-            if(j <= 12):
-                lines = np.array(line)
-                elements = lines[0].split(';')
-                if(j == 1):
-                    mixture = []
-                    previous_mix = elements[0]
-                else:
-                    if(elements[0] != previous_mix):
-                        print("problem : not a 12 genotypes mix")
-                        # On vérifie qu'on a bien des mélanges de 12 génotypes à chaque fois
-                    previous_mix = elements[0]
-                mixture.append(elements[1])
-                if(j == 12):
-                    mixtures_dict[elements[0]] = mixture
-                j += 1
-            if(j == 13):
-                j = 1
-
-
+#FONCTION OBSOLETE. Encodage multiple. Pourrait s'avérer utile dans le cas multinomial ?
 def encode_nucleotypes(filepath, nb_genotypes, nb_snips):
     G = np.zeros((nb_snips, nb_genotypes))
     f = open(filepath, 'r')
@@ -211,7 +345,7 @@ def encode_nucleotypes(filepath, nb_genotypes, nb_snips):
     lines_dict = {} # lines_dict est le dictionnaire des positions harp de la matrice G selon le numéro de ligne
     pairs_dict = {} # dictionnaire des paires parentes selon la position harp
     for line in csv.reader(f):
-        if(i == 0):
+        if i == 0:
             nb_genotypes_in_file = len(line) - 2 # pour vérifier qu'il y a bien 96 génotypes
             print("Nbr de génotypes dans le fichier :", nb_genotypes_in_file)
         else:
@@ -221,117 +355,50 @@ def encode_nucleotypes(filepath, nb_genotypes, nb_snips):
             nucleotids_already_seen = []
             for j in range(2, len(line)):
                 # A = 0, C = 1, G = 2, T = 3, autre : 4
-                if(line[j] != 'A' and line[j] != 'C' and line[j] != 'G' and line[j] != 'T'):
+                if line[j] != 'A' and line[j] != 'C' and line[j] != 'G' and line[j] != 'T':
                     # Il peut y avoir des M, S, Y, W...
                     G[i - 1][j - 2] = 4
-                if (line[j] == 'A'):
+                if line[j] == 'A':
                     G[i - 1][j - 2] = 0
                     nucleotids_already_seen.append('A')
-                if (line[j] == 'C'):
+                if line[j] == 'C':
                     G[i - 1][j - 2] = 1
                     nucleotids_already_seen.append('C')
-                if (line[j] == 'G'):
+                if line[j] == 'G':
                     G[i - 1][j - 2] = 2
                     nucleotids_already_seen.append('G')
-                if (line[j] == 'T'):
+                if line[j] == 'T':
                     G[i - 1][j - 2] = 3
                     nucleotids_already_seen.append('T')
             nucleotids_already_seen = list(set(nucleotids_already_seen))
-            if(len(nucleotids_already_seen) >= 3):
+            if len(nucleotids_already_seen) >= 3:
                 print("more than 2 nucleotids types seen", len(nucleotids_already_seen)) # (sans compter les autres que ACGT)
             pairs_dict[int(line[0])] = nucleotids_already_seen
         i += 1
     return [G, lines_dict, pairs_dict]
 
 
-def encode_nucleotypes_0_1_2(filepath, nb_genotypes, nb_snips):
-    G = np.zeros((nb_snips, nb_genotypes))
-    f = open(filepath, 'r')
-    i = 0
-    lines_dict = {} # lines_dict est le dictionnaire des positions harp de la matrice G selon le numéro de ligne
-    pairs_dict = {} # dictionnaire des paires parentes selon la position harp
-    column_dict = {}
-    for line in csv.reader(f):
-        if(i == 0):
-            nb_genotypes_in_file = len(line) - 2 # pour vérifier qu'il y a bien 96 génotypes
-            print("Nbr de génotypes dans le fichier :", nb_genotypes_in_file)
-            for j in range(2, len(line)):
-                column_dict[line[j]] = j - 2
-            print(column_dict)
-            # créer un tableau/dico avec les colonnes correspondant à chaque G
-        else:
-            line_nb = i - 1
-            lines_dict[line_nb] = int(line[0])
-            ref = line[1]
-            nucleotids_already_seen = []
-            for j in range(2, len(line)):
-                # A = 0, C = 1, G = 2, T = 3, autre : 4
-                if (line[j] == ref):
-                    G[i - 1][j - 2] = 1
-                    nucleotids_already_seen.append('A')
-                else:
-                    if(line[j] != 'A' and line[j] != 'C' and line[j] != 'G' and line[j] != 'T'):
-                        # Il peut y avoir des M, S, Y, W...
-                        G[i - 1][j - 2] = 2
-                    else:
-                        G[i - 1][j - 2] = 0
-            nucleotids_already_seen = list(set(nucleotids_already_seen))
-            if(len(nucleotids_already_seen) >= 3):
-                print("more than 2 nucleotids types seen", len(nucleotids_already_seen)) # (sans compter les autres que ACGT)
-            pairs_dict[int(line[0])] = nucleotids_already_seen
-        i += 1
-    return [G, lines_dict, pairs_dict]
-
-
-def delete_reads_errors(harp_dict, pairs_dict):
-    j = 0 # indice de la position harp
-    for key in harp_dict:
-        line_dict = harp_dict[key]
-        reads_dict = line_dict.get('reads_dict')
-        i = 0 # indice du mélange de génotypes, càd correspondant à un tableau de reads
-        for reads_key in reads_dict:
-            reads_array_name = 'reads_array_' + str(i)
-            if('A' not in pairs_dict[key] and reads_dict[reads_array_name][2] != 0):
-                # print("harp", key)
-                # print("reads", i)
-                # print(pairs_dict[key])
-                # print(reads_dict[reads_array_name])
-                reads_dict[reads_array_name][1] = reads_dict[reads_array_name][1] - reads_dict[reads_array_name][2]
-                reads_dict[reads_array_name][2] = 0
-                # print(reads_dict[reads_array_name])
-            if ('C' not in pairs_dict[key] and reads_dict[reads_array_name][3] != 0):
-                reads_dict[reads_array_name][1] = reads_dict[reads_array_name][1] - reads_dict[reads_array_name][3]
-                reads_dict[reads_array_name][3] = 0
-            if ('G' not in pairs_dict[key] and reads_dict[reads_array_name][4] != 0):
-                reads_dict[reads_array_name][1] = reads_dict[reads_array_name][1] - reads_dict[reads_array_name][4]
-                reads_dict[reads_array_name][4] = 0
-            if ('T' not in pairs_dict[key] and reads_dict[reads_array_name][5] != 0):
-                reads_dict[reads_array_name][1] = reads_dict[reads_array_name][1] - reads_dict[reads_array_name][5]
-                reads_dict[reads_array_name][5] = 0
-            i += 1
-        j += 1
-
-def extract_reads_nb(harp_dict):
-    reads_array = []
-    for key in harp_dict:
-        line_dict = harp_dict[key]
-        reads_dict = line_dict['reads_dict']
-        for reads_key in reads_dict:
-            reads_array.append(reads_dict[reads_key][1])
-    return reads_array
 
 positions_dict = build_positions_dict("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/positions_correspondance.txt")
 harp_dict = add_harp_positions("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/reads_statistics.txt", positions_dict)
-#dict_with_proba = obtain_reads_proba(harp_dict, 96)
-# G_and_lines = encode_nucleotypes("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/nucleotypes.txt", 96, 5242)
-#print(G_and_lines[1])
-# print(G_and_lines[2][34682560])
-# delete_reads_errors(harp_dict, G_and_lines[2])
 
-#build_mixtures_dictionnary("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/simulated_mixtures_composition.txt")
-#G_and_lines = encode_nucleotypes_0_1_2("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/nucleotypes.txt", 96, 5242)
+nucleotypes_data = encode_nucleotypes_0_1("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/nucleotypes.txt", 96, 5242)
+pairs_dict = nucleotypes_data[2]
 
-print(extract_reads_nb(harp_dict))
+# delete_reads_errors(harp_dict, pairs_dict)
+# CORRIGER PB AVEC DELETE READS ERRORS (lié à pairs dict)
+
+mixtures_dict = build_mixtures_dictionnary("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/simulated_mixtures_composition.txt")
+nucleotypes = nucleotypes_data[0]
+column_nucleotypes_dict = nucleotypes_data[2]
+positions_errors = nucleotypes_data[5]
+mixture_name = 'Tm1030'
+
+G = generate_G_from_mix(mixture_name, mixtures_dict, nucleotypes, column_nucleotypes_dict)
+print(G[0:10])
+
+reads = reads_of_mix(mixture_name, harp_dict, positions_errors)
+print(reads)
 
 # vérifier éventuellement que les paires parentes sont toujours cohérentes. Exemple : vérifier qu'on n'a pas un cas où les tirages sont
 # de type a/0/g/0 alors que les parents sont de type a/0/0/t
