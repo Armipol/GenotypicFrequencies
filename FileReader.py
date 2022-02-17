@@ -31,6 +31,7 @@ def build_mixtures_dictionnary(filepath):
             if j == 13:
                 j = 1
     print("\nmixtures dict built")
+    f.close()
     return mixtures_dict
 
 
@@ -85,6 +86,7 @@ def encode_nucleotypes_0_1(filepath, nb_genotypes, nb_snips):
     print("nb of reading errors in parents nucleotypes", count_errors)
     print("nb of positions that have reading errors", len(positions_errors))
     print("\nnucleotypes encoded")
+    f.close()
     return [nucleotypes, lines_nucleotypes_dict, column_nucleotypes_dict, pairs_dict, count_errors, positions_errors]
 
 
@@ -184,6 +186,7 @@ def reads_statistics_reader(filepath):
 
             if k != 96:
                 print("problem with number of genotypes for position", position_number)
+    f.close()
     return dict
 
     # il faut utiliser une clé distincte du nom du fragment. Plusieurs snps sont en fait sur le même fragment (2031 lignes font
@@ -210,6 +213,7 @@ def build_positions_dict(filepath):
             dict[i] = {'fragment_name': line_array[0], 'basic_position': line_array[1], 'harp_position': line_array[2]}
 
     print("\npositions dictionnary built")
+    f.close()
     return dict
 
 
@@ -230,9 +234,24 @@ def add_harp_positions(filepath_reads, positions_dict):
 
         # la position n'est pas une clé car on retrouve plusieurs fois une même position.
         # on doit mettre les numéros de positions à la référence HARP pour comparer avec les nucléotypes
-        # à priori il semble y avoir 5242 numéros harp, donc la matrice G devrait avoir 5242 lignes.
+        # il y a 5242 numéros harp
     print("\nharp positions added")
     return harp_dict
+
+
+def check_sum_is_nbReads(harp_dict):
+    i = 0
+    for key in harp_dict:
+        line_dict = harp_dict[key]
+        reads_dict = line_dict.get('reads_dict')
+        for reads_key in reads_dict:
+            sum = reads_dict[reads_key][2] + reads_dict[reads_key][3] + reads_dict[reads_key][4] + reads_dict[reads_key][5]
+            if sum != reads_dict[reads_key][1]:
+                print("la somme des reads de nucléotides ne vaut pas le nbr de reads total")
+                print("somme:", sum)
+                print("nbReads:", reads_dict[reads_key][1])
+                i += 1
+    print("nombre de sommes différentes:", i)
 
 
 def delete_reads_errors(harp_dict, pairs_dict):
@@ -375,18 +394,53 @@ def encode_nucleotypes(filepath, nb_genotypes, nb_snips):
                 print("more than 2 nucleotids types seen", len(nucleotids_already_seen)) # (sans compter les autres que ACGT)
             pairs_dict[int(line[0])] = nucleotids_already_seen
         i += 1
+    f.close()
     return [G, lines_dict, pairs_dict]
 
+
+def get_mixtures_list(mixtures_dict):
+    list = []
+    for key in mixtures_dict:
+        list.append(key)
+    return list
+
+
+def generate_data_for_mix(mixture_name):
+    positions_dict = build_positions_dict(
+        "C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/positions_correspondance.txt")
+    harp_dict = add_harp_positions(
+        "C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/reads_statistics.txt", positions_dict)
+
+    nucleotypes_data = encode_nucleotypes_0_1(
+        "C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/nucleotypes.txt", 96, 5242)
+    pairs_dict = nucleotypes_data[3]
+
+    delete_reads_errors(harp_dict, pairs_dict)
+
+    mixtures_dict = build_mixtures_dictionnary(
+        "C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/simulated_mixtures_composition.txt")
+    nucleotypes = nucleotypes_data[0]
+    column_nucleotypes_dict = nucleotypes_data[2]
+    positions_errors = nucleotypes_data[5]
+
+    G = generate_G_from_mix(mixture_name, mixtures_dict, nucleotypes, column_nucleotypes_dict)
+    print(G[0:10])
+
+    reads = reads_of_mix(mixture_name, harp_dict, positions_errors)
+    print(reads)
 
 
 positions_dict = build_positions_dict("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/positions_correspondance.txt")
 harp_dict = add_harp_positions("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/reads_statistics.txt", positions_dict)
 
-nucleotypes_data = encode_nucleotypes_0_1("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/nucleotypes.txt", 96, 5242)
-pairs_dict = nucleotypes_data[2]
+#check_sum_is_nbReads(harp_dict)
+# ATTENTION, on remarque que la somme des tirages pour les nucléotides ACGT n'est pas toujours égale au nbr de reads.
+# Retirer le chiffre de nbReads en trop ?
 
-# delete_reads_errors(harp_dict, pairs_dict)
-# CORRIGER PB AVEC DELETE READS ERRORS (lié à pairs dict)
+nucleotypes_data = encode_nucleotypes_0_1("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/nucleotypes.txt", 96, 5242)
+pairs_dict = nucleotypes_data[3]
+
+delete_reads_errors(harp_dict, pairs_dict)
 
 mixtures_dict = build_mixtures_dictionnary("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/simulated_mixtures_composition.txt")
 nucleotypes = nucleotypes_data[0]
@@ -399,6 +453,8 @@ print(G[0:10])
 
 reads = reads_of_mix(mixture_name, harp_dict, positions_errors)
 print(reads)
+
+print(get_mixtures_list(mixtures_dict))
 
 # vérifier éventuellement que les paires parentes sont toujours cohérentes. Exemple : vérifier qu'on n'a pas un cas où les tirages sont
 # de type a/0/g/0 alors que les parents sont de type a/0/0/t
