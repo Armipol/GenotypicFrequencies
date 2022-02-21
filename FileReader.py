@@ -406,20 +406,16 @@ def get_mixtures_list(mixtures_dict):
     return list
 
 
-def generate_data_for_mix(mixture_name):
-    positions_dict = build_positions_dict(
-        "C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/positions_correspondance.txt")
-    harp_dict = add_harp_positions(
-        "C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/reads_statistics.txt", positions_dict)
+def generate_data_for_mix(mixture_name, filepath_positions, filepath_reads, filepath_nucleotypes, filepath_mixtures):
+    positions_dict = build_positions_dict(filepath_positions)
+    harp_dict = add_harp_positions(filepath_reads, positions_dict)
 
-    nucleotypes_data = encode_nucleotypes_0_1(
-        "C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/nucleotypes.txt", 96, 5242)
+    nucleotypes_data = encode_nucleotypes_0_1(filepath_nucleotypes, 96, 5242)
     pairs_dict = nucleotypes_data[3]
 
     delete_reads_errors(harp_dict, pairs_dict)
 
-    mixtures_dict = build_mixtures_dictionnary(
-        "C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/simulated_mixtures_composition.txt")
+    mixtures_dict = build_mixtures_dictionnary(filepath_mixtures)
     nucleotypes = nucleotypes_data[0]
     column_nucleotypes_dict = nucleotypes_data[2]
     positions_errors = nucleotypes_data[5]
@@ -430,32 +426,34 @@ def generate_data_for_mix(mixture_name):
     reads = reads_of_mix(mixture_name, harp_dict, positions_errors)
     print(reads)
 
+    return [G, reads]
 
-positions_dict = build_positions_dict("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/positions_correspondance.txt")
-harp_dict = add_harp_positions("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/reads_statistics.txt", positions_dict)
+
+# positions_dict = build_positions_dict("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/positions_correspondance.txt")
+# harp_dict = add_harp_positions("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/reads_statistics.txt", positions_dict)
 
 #check_sum_is_nbReads(harp_dict)
 # ATTENTION, on remarque que la somme des tirages pour les nucléotides ACGT n'est pas toujours égale au nbr de reads.
 # Retirer le chiffre de nbReads en trop ?
 
-nucleotypes_data = encode_nucleotypes_0_1("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/nucleotypes.txt", 96, 5242)
-pairs_dict = nucleotypes_data[3]
-
-delete_reads_errors(harp_dict, pairs_dict)
-
-mixtures_dict = build_mixtures_dictionnary("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/simulated_mixtures_composition.txt")
-nucleotypes = nucleotypes_data[0]
-column_nucleotypes_dict = nucleotypes_data[2]
-positions_errors = nucleotypes_data[5]
-mixture_name = 'Tm1030'
-
-G = generate_G_from_mix(mixture_name, mixtures_dict, nucleotypes, column_nucleotypes_dict)
-print(G[0:10])
-
-reads = reads_of_mix(mixture_name, harp_dict, positions_errors)
-print(reads)
-
-print(get_mixtures_list(mixtures_dict))
+# nucleotypes_data = encode_nucleotypes_0_1("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/nucleotypes.txt", 96, 5242)
+# pairs_dict = nucleotypes_data[3]
+#
+# delete_reads_errors(harp_dict, pairs_dict)
+#
+# mixtures_dict = build_mixtures_dictionnary("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/simulated_mixtures_composition.txt")
+# nucleotypes = nucleotypes_data[0]
+# column_nucleotypes_dict = nucleotypes_data[2]
+# positions_errors = nucleotypes_data[5]
+# mixture_name = 'Tm1030'
+#
+# G = generate_G_from_mix(mixture_name, mixtures_dict, nucleotypes, column_nucleotypes_dict)
+# print(G[0:10])
+#
+# reads = reads_of_mix(mixture_name, harp_dict, positions_errors)
+# print(reads)
+#
+# print(get_mixtures_list(mixtures_dict))
 
 # vérifier éventuellement que les paires parentes sont toujours cohérentes. Exemple : vérifier qu'on n'a pas un cas où les tirages sont
 # de type a/0/g/0 alors que les parents sont de type a/0/0/t
