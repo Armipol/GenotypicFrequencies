@@ -8,7 +8,7 @@ filepath_mixtures = "C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers
 mixtures_dict = build_mixtures_dictionnary(filepath_mixtures)
 mixtures_list = get_mixtures_list(mixtures_dict)
 
-for mixture_name in mixtures_list :
+for mixture_name in mixtures_list:
     data = generate_data_for_mix(mixture_name, filepath_positions, filepath_reads, filepath_nucleotypes, filepath_mixtures)
     G = data[0]
     reads = data[1]
