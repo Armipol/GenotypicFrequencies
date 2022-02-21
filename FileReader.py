@@ -252,6 +252,7 @@ def check_sum_is_nbReads(harp_dict):
                 print("nbReads:", reads_dict[reads_key][1])
                 i += 1
     print("nombre de sommes différentes:", i)
+    return i
 
 
 def delete_reads_errors(harp_dict, pairs_dict):
