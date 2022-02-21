@@ -96,6 +96,7 @@ def generate_G_from_mix(mixture_name, mixtures_dict, nucleotypes, column_nucleot
     print("len nucleotypes", len(nucleotypes))
     for i in range(len(nucleotypes)):
         for j in range(len(genotypes)):
+            #utiliser np.matrix
             G[i][j] = int(nucleotypes[i][column_nucleotypes_dict[genotypes[j]]])
     return G
 
@@ -297,7 +298,7 @@ def extract_reads_nb(harp_dict):
 
 def reads_of_mix(mixture_name, harp_dict, positions_errors):
     reads = np.zeros((2,len(harp_dict.keys()) - len(positions_errors)))
-    reads_array_name = 'reads_array_' + str(int(mixture_name[3:]))
+    reads_array_name = 'reads_array_' + str(int(mixture_name[3:]) - 1)
     i = 0
     for position in harp_dict:
         if position not in positions_errors:
@@ -406,7 +407,7 @@ def get_mixtures_list(mixtures_dict):
     return list
 
 
-def generate_data_for_mix(mixture_name, filepath_positions, filepath_reads, filepath_nucleotypes, filepath_mixtures):
+def build_data_utils(filepath_positions, filepath_reads, filepath_nucleotypes, filepath_mixtures):
     positions_dict = build_positions_dict(filepath_positions)
     harp_dict = add_harp_positions(filepath_reads, positions_dict)
 
@@ -420,13 +421,7 @@ def generate_data_for_mix(mixture_name, filepath_positions, filepath_reads, file
     column_nucleotypes_dict = nucleotypes_data[2]
     positions_errors = nucleotypes_data[5]
 
-    G = generate_G_from_mix(mixture_name, mixtures_dict, nucleotypes, column_nucleotypes_dict)
-    print(G[0:10])
-
-    reads = reads_of_mix(mixture_name, harp_dict, positions_errors)
-    print(reads)
-
-    return [G, reads]
+    return [mixtures_dict, nucleotypes, column_nucleotypes_dict, positions_errors, harp_dict]
 
 
 # positions_dict = build_positions_dict("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/positions_correspondance.txt")
