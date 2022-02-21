@@ -1,4 +1,5 @@
 import numpy as np
+import scipy
 
 import Generator
 
@@ -16,13 +17,12 @@ import Generator
 #Pf2 = np.array([0.416666667,0.313207547,0.313765182,0.197916667,0.515151515,0.493761141,0.928571429,0.516129032,1,0.651639344])
 
 #valeurs à faire varier
-nb_genotypes = 10
-nb_snips = 30
+nb_genotypes = 5
+nb_snips = 8
 
 G_t = Generator.generateG(nb_genotypes, nb_snips)
 print(G_t)
 lam_reel = Generator.generateLambda(nb_genotypes)
-print("lambda réel ",lam_reel)
 freq = Generator.generateTrue_frequencies(G_t, lam_reel)
 print("freq ", freq)
 obs = Generator.generateReads_observ(nb_snips, freq)
@@ -33,6 +33,8 @@ for i in range(len(obs[0])) :
 
 print("pf1", Pf1_list)
 Pf1 = np.array(Pf1_list)
+print("lambda réel ",lam_reel)
+
 
 
 #Méthode de minimisation de Essr pour trouver une valeur de lambda
@@ -41,24 +43,8 @@ def minimizeEssr(G_t, Pf1) :
     G_nbraws = np.size(G, 0)
     Gd = np.c_[np.ones(G_nbraws), G]  # design matrix
     Gd_t = Gd.transpose()
-
-    lam = np.linalg.pinv(Gd_t @ Gd) @ Gd_t @ Pf1
-    #print("lambda: {}".format(lam))
-    #print("sol: {}".format(Gd @ lam))
-
-    #prediction for any new vector
-    pf_predicted = []
-    for j in range(len(G_t[0])) :
-        x = []
-        x.append(1)
-        for i in range(len(G_t)):
-            x.append(G[j][i])
-        #print("x : ", x)
-        #print("prediction: {}".format(x @ lam))
-        pf_predicted.append(x @ lam)
-    #print(pf_predicted)
-    lam_predicted = np.linalg.pinv(G) @ pf_predicted
-    return lam_predicted
+    lam = np.linalg.inv(Gd_t @ Gd) @ Gd_t @ Pf1 # closed-form solution
+    return lam[1:6]
 
 #Méthode pseudo-inversion directe de G
 # Lambda = pseudoinv(G) * Pf1
@@ -77,9 +63,8 @@ def erreur(lam_reel, lam_predicted) :
 
 lam_predicted1 = pinv_only(G_t, Pf1)
 lam_predicted2 = minimizeEssr(G_t, Pf1)
-print("lambda réel", lam_reel)
+# print("lambda réel", lam_reel)
 print("lambda prédit inversion simple", lam_predicted1)
 print("lambda prédit minimisation essr", lam_predicted2)
 erreur(lam_reel, lam_predicted1)
 erreur(lam_reel, lam_predicted2)
-
