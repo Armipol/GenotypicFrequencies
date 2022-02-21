@@ -21,7 +21,9 @@ def pinv_only(G_t, Pf1) :
     G = np.array(G_t).transpose()
     return np.linalg.pinv(G) @ Pf1
 
-#Méthode de minimisation de Essr pour trouver une valeur de lambda : utilisation de la closed-form
+#Méthode de minimisation de Essr pour trouver une valeur de lambda :
+# utilisation de la closed-form
+
 def minimizeEssr(G_t, Pf1) :
     G = np.array(G_t).transpose()
     G_nbraws = np.size(G, 0)

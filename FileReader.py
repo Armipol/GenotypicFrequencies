@@ -320,8 +320,8 @@ def extract_reads_nb(harp_dict):
             reads_array.append(reads_dict[reads_key][1])
     return reads_array
 
-positions_dict = build_positions_dict("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/positions_correspondance.txt")
-harp_dict = add_harp_positions("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/reads_statistics.txt", positions_dict)
+# positions_dict = build_positions_dict("D:/Rémi/Documents/IMT/3A/S10/EtudeTech/melange_simul_renom/positions_correspondance.txt")
+# harp_dict = add_harp_positions("D:/Rémi/Documents/IMT/3A/S10/EtudeTech/melange_simul_renom/SIMULS_READS_MIXTURES_fauxBAM_fauxREADS/reads_statistics.txt", positions_dict)
 #dict_with_proba = obtain_reads_proba(harp_dict, 96)
 # G_and_lines = encode_nucleotypes("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/nucleotypes.txt", 96, 5242)
 #print(G_and_lines[1])
@@ -331,7 +331,7 @@ harp_dict = add_harp_positions("C:/Users/mabed/Documents/Travail/Etudes_techniqu
 #build_mixtures_dictionnary("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/simulated_mixtures_composition.txt")
 #G_and_lines = encode_nucleotypes_0_1_2("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/nucleotypes.txt", 96, 5242)
 
-print(extract_reads_nb(harp_dict))
+# print(extract_reads_nb(harp_dict))
 
 # vérifier éventuellement que les paires parentes sont toujours cohérentes. Exemple : vérifier qu'on n'a pas un cas où les tirages sont
 # de type a/0/g/0 alors que les parents sont de type a/0/0/t
