@@ -25,8 +25,7 @@ def generateLambda(nb_genotypes):
         freq_geno[1] -= 0.01
     return freq_geno
 
-f = generateLambda(12)
-print(sum(f))
+
 def generateG(nb_genotypes,nb_snips):
     G = np.zeros((nb_snips,nb_genotypes))
     for i in range(nb_snips):

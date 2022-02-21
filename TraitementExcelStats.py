@@ -17,18 +17,10 @@ from openpyxl import load_workbook
 # Méthode pseudo-inversion directe de G : lambda = pseudoinv(G) * Pf1
 # Attention ici à l'inversion de G qui n'est pas toujours possible ?
 
+#Cette fonction est équivalente à la closed-form d'Essr
 def pinv_only(G_t, Pf1) :
     G = np.array(G_t).transpose()
     return np.linalg.pinv(G) @ Pf1
-
-#Méthode de minimisation de Essr pour trouver une valeur de lambda : utilisation de la closed-form
-def minimizeEssr(G_t, Pf1) :
-    G = np.array(G_t).transpose()
-    G_nbraws = np.size(G, 0)
-    Gd = np.c_[np.ones(G_nbraws), G]  # design matrix
-    Gd_t = Gd.transpose()
-    lam = np.linalg.inv(Gd_t @ Gd) @ Gd_t @ Pf1 # closed-form solution
-    return lam[1:6]
 
 
 ## Méthodes de maximisation de la vraisemblance
