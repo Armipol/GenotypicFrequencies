@@ -85,6 +85,7 @@ def encode_nucleotypes_0_1(filepath, nb_genotypes, nb_snips):
     nucleotypes = np.delete(nucleotypes, tuple_to_delete, axis=0)
     print("nb of reading errors in parents nucleotypes", count_errors)
     print("nb of positions that have reading errors", len(positions_errors))
+    print("positions errors ", positions_errors)
     print("\nnucleotypes encoded")
     f.close()
     return [nucleotypes, lines_nucleotypes_dict, column_nucleotypes_dict, pairs_dict, count_errors, positions_errors]
@@ -314,6 +315,7 @@ def reads_of_mix(mixture_name, harp_dict, positions_errors):
             if (ref == 'T'):
                 reads[1][i] = reads_array[5]
             i += 1
+
     return reads
 
 
@@ -424,18 +426,51 @@ def build_data_utils(filepath_positions, filepath_reads, filepath_nucleotypes, f
     return [mixtures_dict, nucleotypes, column_nucleotypes_dict, positions_errors, harp_dict]
 
 
-# positions_dict = build_positions_dict("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/positions_correspondance.txt")
-# harp_dict = add_harp_positions("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/reads_statistics.txt", positions_dict)
+def check_if_position_is_error(fragment_name, basic_position, positions_dict, positions_errors):
+    for key in positions_dict:
+        if positions_dict[key]['fragment_name'] == fragment_name and positions_dict[key]['basic_position'] == basic_position:
+            harp_position = positions_dict[key]['harp_position']
+            print("corresp harp position", harp_position)
+            if harp_position in positions_errors:
+                print("position is error")
+                return True
+            else:
+                print("position is not error")
+                return False
 
-#check_sum_is_nbReads(harp_dict)
+positions_dict = build_positions_dict("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/positions_correspondance.txt")
+harp_dict = add_harp_positions("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/reads_statistics.txt", positions_dict)
+
+# check_sum_is_nbReads(harp_dict)
 # ATTENTION, on remarque que la somme des tirages pour les nucléotides ACGT n'est pas toujours égale au nbr de reads.
 # Retirer le chiffre de nbReads en trop ?
 
-# nucleotypes_data = encode_nucleotypes_0_1("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/nucleotypes.txt", 96, 5242)
-# pairs_dict = nucleotypes_data[3]
-#
+nucleotypes_data = encode_nucleotypes_0_1("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/nucleotypes.txt", 96, 5242)
+pairs_dict = nucleotypes_data[3]
+positions_errors = nucleotypes_data[5]
+
+# check_if_position_is_error('chr1A_1_292633361_1241029_1241748', 97, positions_dict, positions_errors)
+# check_if_position_is_error('chr1A_1_292633361_1241029_1241748', 570, positions_dict, positions_errors)
+# check_if_position_is_error('chr1A_1_292633361_3853365_3854084', 553, positions_dict, positions_errors)
+# check_if_position_is_error('chr1A_1_292633361_3853365_3854084', 587, positions_dict, positions_errors)
+# check_if_position_is_error('chr1A_1_292633361_3853365_3854084', 592, positions_dict, positions_errors)
+# check_if_position_is_error('chr1A_1_292633361_3989907_3990626', 581, positions_dict, positions_errors)
+# check_if_position_is_error('chr1A_1_292633361_3989907_3990626', 606, positions_dict, positions_errors)
+# check_if_position_is_error('chr1A_1_292633361_4112621_4113340', 70, positions_dict, positions_errors)
+# check_if_position_is_error('chr1A_1_292633361_4112621_4113340', 658, positions_dict, positions_errors)
+# check_if_position_is_error('chr1A_1_292633361_4121476_4122728', 228, positions_dict, positions_errors)
+# check_if_position_is_error('chr1A_1_292633361_4121476_4122728', 1057, positions_dict, positions_errors)
+# check_if_position_is_error('chr1A_1_292633361_4891129_4892093', 114, positions_dict, positions_errors)
+# check_if_position_is_error('chr1A_1_292633361_4891129_4892093', 174, positions_dict, positions_errors)
+# check_if_position_is_error('chr1A_1_292633361_4891129_4892093', 816, positions_dict, positions_errors)
+# check_if_position_is_error('chr1A_1_292633361_4891129_4892093', 883, positions_dict, positions_errors)
+# check_if_position_is_error('chr1A_1_292633361_5724075_5724793', 331, positions_dict, positions_errors)
+# check_if_position_is_error('chr1A_1_292633361_6609860_6610579', 154, positions_dict, positions_errors)
+# check_if_position_is_error('chr1A_1_292633361_7558092_7558811', 554, positions_dict, positions_errors)
+
+
 # delete_reads_errors(harp_dict, pairs_dict)
-#
+
 # mixtures_dict = build_mixtures_dictionnary("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/simulated_mixtures_composition.txt")
 # nucleotypes = nucleotypes_data[0]
 # column_nucleotypes_dict = nucleotypes_data[2]
