@@ -1,15 +1,6 @@
-import random
-
-from scipy import stats
 import random as rd
 import pandas as pd
 import numpy as np
-
-import FileReader
-
-# positions_dict = FileReader.build_positions_dict("D:/Rémi/Documents/IMT/3A/S10/EtudeTech/melange_simul_renom/positions_correspondance.txt")
-# harp_dict = FileReader.add_harp_positions("D:/Rémi/Documents/IMT/3A/S10/EtudeTech/melange_simul_renom/SIMULS_READS_MIXTURES_fauxBAM_fauxREADS/reads_statistics.txt", positions_dict)
-# reads_possibles = FileReader.extract_reads_nb(harp_dict)
 
 def generateLambda(nb_genotypes):
     freq_geno = np.zeros(nb_genotypes)
@@ -77,8 +68,8 @@ def generationBasique(nb_genomes,nb_snp,nb_iter):
         indiceLigne.append('nb1')
         indiceCol.append('freq_init')
         df = pd.DataFrame(Matrice,index=indiceLigne,columns=indiceCol)
-        with pd.ExcelWriter('output.xlsx',mode='a') as writer:
+        with pd.ExcelWriter('outputTest.xlsx',mode='a') as writer:
             df.to_excel(writer,sheet_name='N°'+str(iter+1))
 
-generationBasique(12,10,10)
+generationBasique(12,20,1)
 # print(random.choices(reads_possibles,k=10))
