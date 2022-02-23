@@ -30,12 +30,24 @@ for j in range(4404):
     indiceCol.append(indC)
 
 ## Lancement génération du Excel
-for i in range(63,97):
-    print(i)
-    G_melange = generate_G_from_mix('Tm10'+str(i).zfill(2), mixtures_dict, nucleotypes, column_nucleotypes_dict)
-    reads_melange = reads_of_mix('Tm10'+str(i).zfill(2), harp_dict, positions_errors)
-    matrice = G_melange.T
-    matrice = np.vstack([matrice,reads_melange])
-    df = pd.DataFrame(matrice,index=indiceLigne,columns=indiceCol)
-    with pd.ExcelWriter('outputReel.xlsx', engine="openpyxl", mode="a") as writer:
-        df.to_excel(writer,sheet_name='N°'+str(i))
+
+def generationReal(fileExcel,listeMelanges): # Ici, listeMelanges doit être de la forme [1,4,11,...]
+    for melange in listeMelanges:
+        print("Mélange N° : ",melange)
+
+        # On récupère G
+        G_melange = generate_G_from_mix("Tm10"+str(melange).zfill(2), mixtures_dict, nucleotypes, column_nucleotypes_dict)
+
+        # On récupère les reads
+        reads_melange = reads_of_mix("Tm10"+str(melange).zfill(2), harp_dict, positions_errors)
+
+        # On met en forme pour Excel
+        matrice = G_melange.T
+        matrice = np.vstack([matrice,reads_melange])
+
+        # On exporte
+        df = pd.DataFrame(matrice,index=indiceLigne,columns=indiceCol)
+        with pd.ExcelWriter(fileExcel, engine="openpyxl", mode="a") as writer:
+            df.to_excel(writer,sheet_name="Tm10"+str(melange).zfill(2))
+
+generationReal("outputReal.xlsx",[4,6])
