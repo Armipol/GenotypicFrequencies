@@ -438,16 +438,17 @@ def check_if_position_is_error(fragment_name, basic_position, positions_dict, po
                 print("position is not error")
                 return False
 
-positions_dict = build_positions_dict("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/positions_correspondance.txt")
-harp_dict = add_harp_positions("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/reads_statistics.txt", positions_dict)
+positions_dict = build_positions_dict("D:/Rémi/Documents/IMT/3A/S10/EtudeTech/melange_simul_renom/positions_correspondance.txt")
+harp_dict = add_harp_positions("D:/Rémi/Documents/IMT/3A/S10/EtudeTech/melange_simul_renom/SIMULS_MIXTURES_fauxBAM_vraiREADS/reads_statistics.txt", positions_dict)
 
 # check_sum_is_nbReads(harp_dict)
 # ATTENTION, on remarque que la somme des tirages pour les nucléotides ACGT n'est pas toujours égale au nbr de reads.
 # Retirer le chiffre de nbReads en trop ?
 
-nucleotypes_data = encode_nucleotypes_0_1("C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/nucleotypes.txt", 96, 5242)
+nucleotypes_data = encode_nucleotypes_0_1("D:/Rémi/Documents/IMT/3A/S10/EtudeTech/melange_simul_renom/nucleotypes.txt", 96, 5242)
 pairs_dict = nucleotypes_data[3]
 positions_errors = nucleotypes_data[5]
+
 
 # check_if_position_is_error('chr1A_1_292633361_1241029_1241748', 97, positions_dict, positions_errors)
 # check_if_position_is_error('chr1A_1_292633361_1241029_1241748', 570, positions_dict, positions_errors)

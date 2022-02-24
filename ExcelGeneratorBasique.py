@@ -1,6 +1,8 @@
 import random as rd
 import pandas as pd
 import numpy as np
+from openpyxl import Workbook
+
 
 def generateLambda(nb_genotypes):
     freq_geno = np.zeros(nb_genotypes)
@@ -20,13 +22,21 @@ def generateG(nb_genotypes,nb_snips):
 def generateReads_observ(nb_snips,freq,G):
     reads_observ = np.zeros((2,nb_snips))
     Pf1 = G @ freq
-    reads = np.random.randint(0,100,size=nb_snips)
-    nb1_observe = np.random.binomial(reads,Pf1)
+    reads1 = np.random.randint(0,15,size=int(nb_snips/2))
+    reads2 = np.random.randint(0,200,size=int(nb_snips/2))
+    Pf1_split = np.split(Pf1,2)
+    nb1_observe1 = np.random.binomial(reads1,Pf1_split[0])
+    nb1_observe2 = np.random.binomial(reads2,Pf1_split[1])
+    reads = np.concatenate((reads1,reads2))
+    nb1_observe = np.concatenate((nb1_observe1,nb1_observe2))
     reads_observ[0] = reads
     reads_observ[1] = nb1_observe
     return reads_observ
 
 def generationBasique(nb_genomes,nb_snp,nb_iter,fileExcel):
+    # Création du fichier excel
+    wb = Workbook()
+    wb.save(fileExcel)
     for iter in range(nb_iter):
         # Génération des fréquences à retrouver
         freq = np.array(generateLambda(nb_genomes))
@@ -64,4 +74,4 @@ def generationBasique(nb_genomes,nb_snp,nb_iter,fileExcel):
         with pd.ExcelWriter(fileExcel,mode='a') as writer:
             df.to_excel(writer,sheet_name='N°'+str(iter+1))
 
-generationBasique(12,20,5,"outputBasique.xlsx")
+generationBasique(12,1000,5,"outputBasique3.xlsx")

@@ -76,16 +76,18 @@ def traitementDonneesReelles(fileExcel,listeMelanges):
         ## Maximisation de la fonction de vraisemblance (minimisation de son opposé) :
         print("début calcul algorithmes")
         min_NMLog = scipy.optimize.minimize(likelihoodLog,lam_init,args=(reads,G_T),method= 'Nelder-Mead',bounds=bounds,options={'maxiter':50,'maxfev':50})
+        cons = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
+        min_SLSQPLog = scipy.optimize.minimize(likelihoodLog, lam_init, args=(reads, G_T), method='SLSQP',bounds=bounds, constraints=cons)
         print("algos ok")
 
         ## Traitement des résultats :
 
         # On crée une matrice à afficher sur excel
-        lambda_differents = np.array([min_NMLog.x,lam_init])
-        likelihoodsLog = np.array([likelihoodLog(min_NMLog.x,reads,G_T),likelihoodLog(lam_init,reads,G_T)])
+        lambda_differents = np.array([lam_init, min_NMLog.x, min_SLSQPLog.x])
+        likelihoodsLog = np.array([likelihoodLog(lam_init,reads,G_T),likelihoodLog(min_NMLog.x,reads,G_T),likelihoodLog(min_SLSQPLog.x,reads,G_T)])
         lambda_differents = lambda_differents.T
         matrice = np.vstack((lambda_differents,likelihoodsLog))
-        colonnes = ["NMLog","LambdaMatrix"]
+        colonnes = ["LambdaMatrix","NMLog","SLSQPLog"]
 
         # Export vers Excel
         book = load_workbook(fileExcel)
@@ -96,4 +98,4 @@ def traitementDonneesReelles(fileExcel,listeMelanges):
         df.to_excel(writer,"Tm10"+str(melange).zfill(2), startcol=3, startrow=nb_geno + 5, index=False)
         writer.save()
 
-traitementDonneesReelles("outputReal.xlsx",[4,6])
+traitementDonneesReelles("outputVrai.xlsx",[1,2,3])

@@ -1,10 +1,11 @@
 import random
 import pandas as pd
+from openpyxl import Workbook
 
 from FileReader import *
 
 filepath_positions = "D:/Rémi/Documents/IMT/3A/S10/EtudeTech/melange_simul_renom/positions_correspondance.txt"
-filepath_reads = "D:/Rémi/Documents/IMT/3A/S10/EtudeTech/melange_simul_renom/SIMULS_READS_MIXTURES_fauxBAM_fauxREADS/reads_statistics.txt"
+filepath_reads = "D:/Rémi/Documents/IMT/3A/S10/EtudeTech/melange_simul_renom/SIMULS_MIXTURES_fauxBAM_vraiREADS/reads_statistics.txt"
 filepath_nucleotypes = "D:/Rémi/Documents/IMT/3A/S10/EtudeTech/melange_simul_renom/nucleotypes.txt"
 filepath_mixtures = "D:/Rémi/Documents/IMT/3A/S10/EtudeTech/melange_simul_renom/simulated_mixtures_composition.txt"
 
@@ -38,6 +39,9 @@ indiceLigne.append('nb1')
 indiceCol.append('freq_init')
 
 def generationSemiReal(fileExcel,listeMelanges):
+    # Création du fichier excel
+    wb = Workbook()
+    wb.save(fileExcel)
     for melange in listeMelanges:
         print("Mélange n° : ",melange)
 
@@ -52,6 +56,7 @@ def generationSemiReal(fileExcel,listeMelanges):
 
         # Génération aléatoire des fréquences
         freq = np.array(generateLambda(12))
+        # Si bug ici : relancer
 
         # Génération binomiale des 1 obtenus
         Pf1 = G @ freq
@@ -71,4 +76,4 @@ def generationSemiReal(fileExcel,listeMelanges):
         with pd.ExcelWriter(fileExcel, mode='a') as writer:
             df.to_excel(writer, sheet_name="Tm10"+str(melange).zfill(2))
 
-generationSemiReal("outputSemiReal.xlsx",[5,8])
+generationSemiReal("outputSemiRealVrai.xlsx",[1,2,3,4,5])

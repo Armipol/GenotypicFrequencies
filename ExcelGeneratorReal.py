@@ -1,10 +1,11 @@
 import pandas as pd
+from openpyxl import Workbook
 
 from FileReader import *
 
 ## Filepaths
 filepath_positions = "D:/Rémi/Documents/IMT/3A/S10/EtudeTech/melange_simul_renom/positions_correspondance.txt"
-filepath_reads = "D:/Rémi/Documents/IMT/3A/S10/EtudeTech/melange_simul_renom/SIMULS_READS_MIXTURES_fauxBAM_fauxREADS/reads_statistics.txt"
+filepath_reads = "D:/Rémi/Documents/IMT/3A/S10/EtudeTech/melange_simul_renom/SIMULS_MIXTURES_fauxBAM_vraiREADS/reads_statistics.txt"
 filepath_nucleotypes = "D:/Rémi/Documents/IMT/3A/S10/EtudeTech/melange_simul_renom/nucleotypes.txt"
 filepath_mixtures = "D:/Rémi/Documents/IMT/3A/S10/EtudeTech/melange_simul_renom/simulated_mixtures_composition.txt"
 
@@ -32,6 +33,9 @@ for j in range(4404):
 ## Lancement génération du Excel
 
 def generationReal(fileExcel,listeMelanges): # Ici, listeMelanges doit être de la forme [1,4,11,...]
+    # Pour créer le fichier excel s'il n'existe pas
+    # wb = Workbook()
+    # wb.save(fileExcel)
     for melange in listeMelanges:
         print("Mélange N° : ",melange)
 
@@ -50,4 +54,4 @@ def generationReal(fileExcel,listeMelanges): # Ici, listeMelanges doit être de 
         with pd.ExcelWriter(fileExcel, engine="openpyxl", mode="a") as writer:
             df.to_excel(writer,sheet_name="Tm10"+str(melange).zfill(2))
 
-generationReal("outputReal.xlsx",[4,6])
+generationReal("outputVrai.xlsx",[5,6,7,8,9,10])
