@@ -4,15 +4,15 @@ from openpyxl import Workbook
 from FileReader import *
 
 ## Filepaths
-# filepath_positions = "D:/Rémi/Documents/IMT/3A/S10/EtudeTech/melange_simul_renom/positions_correspondance.txt"
-# filepath_reads = "D:/Rémi/Documents/IMT/3A/S10/EtudeTech/melange_simul_renom/SIMULS_MIXTURES_fauxBAM_vraiREADS/reads_statistics.txt"
-# filepath_nucleotypes = "D:/Rémi/Documents/IMT/3A/S10/EtudeTech/melange_simul_renom/nucleotypes.txt"
-# filepath_mixtures = "D:/Rémi/Documents/IMT/3A/S10/EtudeTech/melange_simul_renom/simulated_mixtures_composition.txt"
+filepath_positions = "D:/Rémi/Documents/IMT/3A/S10/EtudeTech/melange_simul_renom/positions_correspondance.txt"
+filepath_reads = "D:/Rémi/Documents/IMT/3A/S10/EtudeTech/melange_simul_renom/SIMULS_MIXTURES_fauxBAM_vraiREADS/reads_statistics.txt"
+filepath_nucleotypes = "D:/Rémi/Documents/IMT/3A/S10/EtudeTech/melange_simul_renom/nucleotypes.txt"
+filepath_mixtures = "D:/Rémi/Documents/IMT/3A/S10/EtudeTech/melange_simul_renom/simulated_mixtures_composition.txt"
 
-filepath_positions = "C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/positions_correspondance.txt"
-filepath_reads = "C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/reads_statistics.txt"
-filepath_nucleotypes = "C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/nucleotypes.txt"
-filepath_mixtures = "C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/simulated_mixtures_composition.txt"
+# filepath_positions = "C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/positions_correspondance.txt"
+# filepath_reads = "C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/reads_statistics.txt"
+# filepath_nucleotypes = "C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/nucleotypes.txt"
+# filepath_mixtures = "C:/Users/mabed/Documents/Travail/Etudes_techniques/fichiers_travail/simulated_mixtures_composition.txt"
 
 ## Data
 data_utils = build_data_utils(filepath_positions, filepath_reads, filepath_nucleotypes, filepath_mixtures)
@@ -93,4 +93,8 @@ def generationReal96(fileExcel,listeMelanges, G_melange): # Ici, listeMelanges d
         with pd.ExcelWriter(fileExcel, engine="openpyxl", mode="a") as writer:
             df.to_excel(writer,sheet_name="Tm10"+str(melange).zfill(2))
 
-generationReal96("outputVrai.xlsx",[5,6,7], nucleotypes)
+excelName = "outputVrai.xlsx"
+numerosMelanges = [1,2,3] # Ici mélanges n°1,2 et 3 traités
+generationReal(excelName,numerosMelanges, nucleotypes)
+# generationReal96(excelName,numerosMelanges, nucleotypes) # pour générer les 96 génotypes au lieu des 12 du mélange
+
